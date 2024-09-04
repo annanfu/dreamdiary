@@ -14,9 +14,9 @@ Dream Diary is a full-stack web application designed to help users manage their 
 ## How to Run
 
 ### Prerequisites
-Node.js: Install JavaScript runtime.
-MongoDB: Install NoSQL database for data storage.
-Cloudinary Account: Sign up for a Cloudinary account and obtain your Cloudinary credentials.
+- Node.js: Install JavaScript runtime.
+- MongoDB: Install NoSQL database for data storage.
+- Cloudinary Account: Sign up for a Cloudinary account and obtain your Cloudinary credentials.
 
 ### Install dependencies
 ```
