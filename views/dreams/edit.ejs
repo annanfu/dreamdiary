@@ -1,0 +1,171 @@
+<% layout('layouts/boilerplate')%>
+<div class="row">
+    <h1 class="text-center">Edit Dream</h1>
+    <div class="col-md-6 offset-md-3">
+        <form action="/dreams/<%=dream._id%>?_method=PUT" method="POST" novalidate class="validated-form"
+            enctype="multipart/form-data">
+            <div class="mb-4">
+                <label class="form-label" for="title">Title</label>
+                <input class="form-control" type="text" id="title" name="dream[title]"
+                    value="<%=dream.title %>" required>
+                <div class="valid-feedback">
+                    Looks good!
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="form-label" for="date">Date</label>
+                <input class="form-control" type="date" id="date" name="dream[date]"
+                    value="<%= new Date(dream.date).toISOString().split('T')[0] %>" required>
+                <div class="valid-feedback">
+                    Looks good!
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="form-label" for="description">Description</label>
+                <textarea class="form-control" type="text" id="description" name="dream[description]"
+                    required><%=dream.description %></textarea>
+                <div class="valid-feedback">
+                    Looks good!
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="form-label" for="sentiment">Sentiment</label>
+                <div class="sentiment-icons">
+                    <div class="sentiment-icon" data-value="1" title="Very Negative">&#128555;</div>
+                    <div class="sentiment-icon" data-value="2" title="Negative">&#128577;</div>
+                    <div class="sentiment-icon" data-value="3" title="Neutral">&#128528;</div>
+                    <div class="sentiment-icon" data-value="4" title="Positive">&#128578;</div>
+                    <div class="sentiment-icon" data-value="5" title="Very Positive">&#128518;</div>
+                </div>
+                <input type="hidden" id="sentiment" name="dream[sentiment]" value="<%= dream.sentiment %>">
+                <div class="valid-feedback">
+                    Looks good!
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label" for="tag">Tag</label>
+                <input name='dream[tag][]' class='tagify--custom-dropdown' placeholder='Add tags' 
+                    value="<%= dream.tag ? dream.tag.join(', ') : '' %>">
+                </input>
+                <div class="valid-feedback">
+                    Looks good!
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <div class="input-group mb-3">
+                    <input type="file" class="form-control" id="image" name="image" multiple>
+                    <label class="input-group-text" for="image">Add more image(s)</label>
+                </div>
+            </div>
+
+
+            <div class="mb-4">
+                <% dream.images.forEach(function(img, i) { %>
+
+                    <img src="<%=img.thumbnail %>" class="img-thumbnail" alt="">
+                    <div class="form-check-inline">
+                        <input type="checkbox" id="image-<%=i%>" name="deleteImages[]" value="<%=img.filename%>">
+                    </div>
+                    <label for="image-<%=i%>">Delete?</label>
+                    <% })%>
+            </div>
+            <div class="mb-4">
+                <div class="form-check form-switch">
+                    <input type="checkbox" class="form-check-input" role="switch" id="flexSwitchCheckDefault" <% if
+                        (dream.isPrivate) { %>checked<% } %>>
+                        <label class="form-check-label" for="flexSwitchCheckDefault">Set this dream diary to private</label>
+                </div>
+                <input type="hidden" id="hiddenIsPrivate" name="dream[isPrivate]" value="<%= dream.isPrivate %>">
+                <div class="valid-feedback">
+                    Looks good!
+                </div>
+            </div>
+            <div class="mb-4">
+                <button class="btn btn-info">Update Dream</button>
+            </div>
+        </form>
+        <a class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover" href="/dreams/mydream">Back to My Dreams</a>
+
+    </div>
+</div>
+<script>
+    var input = document.querySelector('input[name="dream[tag][]"]');
+    // init Tagify script on the above inputs
+    var tagify = new Tagify(input, {
+        whitelist: [],
+        maxTags: 5,
+        dropdown: {
+            maxItems: 20,
+            classname: 'tags-look',
+            enabled: 0,
+            closeOnSelect: false
+        }
+    });
+
+    var controller;
+
+    tagify.on('input', function (e) {
+        var value = e.detail.value;
+        tagify.whitelist = null;
+
+        controller && controller.abort();
+        controller = new AbortController();
+
+        tagify.loading(true);
+
+        fetch('/dreams/tag-suggestions?value=' + value, { signal: controller.signal })
+            .then(res => res.json())
+            .then(function (newWhitelist) {
+                tagify.whitelist = newWhitelist;
+                tagify.loading(false).dropdown.show(value);
+            });
+    });
+    document.querySelector('form').addEventListener('submit', function (e) {
+        var tagInput = document.querySelector('input[name="dream[tag][]"]');
+
+        tagInput.remove();
+
+        tagify.value.forEach(function (tagObj) {
+            var hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'dream[tag][]';
+            hiddenInput.value = tagObj.value;  // Use the 'value' property of the tag object
+            this.appendChild(hiddenInput);
+        }, this);
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const selectedSentiment = document.getElementById('sentiment').value;
+
+        document.querySelectorAll('.sentiment-icon').forEach(icon => {
+            if (icon.getAttribute('data-value') === selectedSentiment) {
+                icon.classList.add('selected');
+            }
+            icon.addEventListener('click', function () {
+                const value = this.getAttribute('data-value');
+                document.getElementById('sentiment').value = value;
+                document.querySelectorAll('.sentiment-icon').forEach(i => i.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+    });
+
+    // For private/public switch
+    const toggleSwitch = document.getElementById('flexSwitchCheckDefault');
+    const hiddenIsPrivate = document.getElementById('hiddenIsPrivate');
+
+    // If the hidden input is true, set to true, otherwise false
+    toggleSwitch.checked = (hiddenIsPrivate.value === 'true');
+    // change the hidden input value when the switch is toggled
+    toggleSwitch.addEventListener('change', function () {
+        hiddenIsPrivate.value = this.checked;
+    });
+
+    // Ensure the form submits a boolean value
+    document.querySelector('form').addEventListener('submit', function (event) {
+        hiddenIsPrivate.value = (hiddenIsPrivate.value === 'true');
+    });
+
+</script>

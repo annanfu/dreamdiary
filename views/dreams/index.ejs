@@ -1,0 +1,40 @@
+<% layout('layouts/boilerplate') %>
+    <div class="container">
+        <h1 style="text-align: center; margin-bottom: 50px;">Explore The Dreamland</h1>
+        <div class="card-columns">
+            <% for (let dream of dreams) { %>
+                <% if (!dream.isPrivate) { %>
+                    <div class="card">
+                        <img class="card-img-top" alt=""
+                            src="<%= dream.images.length ? dream.images[0].url : 'https://res.cloudinary.com/dbgkvs7nz/image/upload/v1725177277/DreamDiary/hbcrk5uxpuzikbgn3gct.jpg' %>">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <%= dream.title %>
+                            </h5>
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    by <%= dream.author.username %> | <%= new
+                                            Date(dream.date).toLocaleDateString('en-GB') %>
+                                </small>
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <% const isLiked=currentUser ? dream.like.includes(currentUser._id) : false %>
+                                        <span id="likeButton" data-dream-id="<%= dream._id %>"
+                                            style="font-size: 1.5em; cursor: pointer; color: <%= isLiked ? 'Tomato' : 'Black' %>;">
+                                            <i class="fa-<%= isLiked ? 'solid' : 'regular' %> fa-heart"
+                                                title="like"></i>
+                                        </span>
+                                        <span id="likeCount" style="font-size: 0.9em; margin-left: 5px;">
+                                            <%= dream.like.length %>
+                                        </span>
+                                </div>
+                                <a class="btn btn-sm btn-dark" href="/dreams/<%= dream._id %>">View</a>
+                            </div>
+                        </div>
+                    </div>
+                    <% } %>
+                        <% } %>
+        </div>
+    </div>
+

@@ -1,0 +1,120 @@
+<% layout('layouts/boilerplate')%>
+<link rel="stylesheet" href="/stylesheets/stars.css">
+<div class="row">
+    <div class="col-6 offset-md-3">
+        <div id="carouselExample" class="carousel slide">
+            <div class="carousel-inner">
+                <% dream.images.forEach((img, i)=> { %>
+                    <div class="carousel-item <%= i === 0 ? 'active' : '' %>">
+                        <img src="<%= img.url %>" class="d-block w-100" alt="Image <%= i + 1 %>">
+                    </div>
+                    <% }) %>
+            </div>
+            <% if (dream.images.length> 1) { %>
+                <button class="carousel-control-prev" type="button" data-bs-target="#carouselExample" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#carouselExample" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Next</span>
+                </button>
+                <% } %>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <%= dream.title%>
+                </h5>
+                <p class="card-text">
+                    <%= dream.description%>
+                </p>
+            </div>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item">Submitted by <%= dream.author.username%>
+                </li>
+            <li class="list-group-item">Occured on <%= new Date(dream.date).toLocaleDateString('en-GB') %>
+            </li>
+            <li class="list-group-item">
+                Sentiment:
+                <%
+                let sentimentEmoji;
+                if (dream.sentiment === 1) {
+                    sentimentEmoji = "😫"; // Very Negative
+                } else if (dream.sentiment === 2) {
+                    sentimentEmoji = "🙁"; // Negative
+                } else if (dream.sentiment === 3) {
+                    sentimentEmoji = "😐"; // Neutral
+                } else if (dream.sentiment === 4) {
+                    sentimentEmoji = "🙂"; // Positive
+                } else if (dream.sentiment === 5) {
+                    sentimentEmoji = "😆"; // Very Positive
+                } else {
+                    sentimentEmoji = "😐"; // Default to Neutral if unknown
+                }
+                %>
+                <span><%= sentimentEmoji %></span>
+            </li>
+                <% if( dream.tag.length> 0) {%>
+                        <li class="list-group-item">Tags:
+                            <% dream.tag.forEach(tag=> { %>
+                                <span class="badge bg-dark">
+                                    <%= tag%>
+                                </span>
+                                <% }) %>
+                        </li>
+                    <% } %>
+            </ul>
+
+            <% if( currentUser && dream.author.equals(currentUser._id)) {%>
+                <div class="card-body">
+                    <a class="card-link btn btn-outline-info" href="/dreams/<%=dream._id%>/edit">Edit</a>
+                    <form class="d-inline" action="/dreams/<%=dream._id%>?_method=DELETE" method="POST">
+                        <button class="btn btn btn-outline-danger">Delete</button>
+                    </form>
+                </div>
+                <% } %>
+        </div>
+        <div style="text-align: right;">
+            <% const isLiked=currentUser ? dream.like.includes(currentUser._id) : false %>
+                <span id="likeButton" data-dream-id="<%= dream._id %>" style="font-size: 2em; cursor: pointer; 
+                color: <%= isLiked ? 'Tomato' : 'Black' %>;">
+                    <i class="fa-<%= isLiked ? 'solid' : 'regular' %> fa-heart" title="like"></i>
+                </span>
+                <span id="likeCount" style="font-size: 1em; margin-left: 5px;">
+                    <%= dream.like.length %>
+                </span>
+        </div>
+    <a href="/dreams/mydream">Back to My Dreams</a>
+    </div>
+</div>
+
+<script>
+    document.getElementById('likeButton').addEventListener('click', function () {
+        const dreamId = this.getAttribute('data-dream-id');
+        const likeCount = document.getElementById('likeCount');
+        const heartIcon = this.querySelector('i');
+
+        fetch(`/dreams/${dreamId}/like`, { method: 'POST' })
+            .then(response => {
+                if (response.status === 401) {
+                    // User is not logged in
+                    window.location.href = '/login'; // Redirect to login page
+                    throw new Error('User not logged in');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.liked) {
+                    heartIcon.classList.replace('fa-regular', 'fa-solid');
+                    heartIcon.style.color = 'Tomato';
+                } else {
+                    heartIcon.classList.replace('fa-solid', 'fa-regular');
+                    heartIcon.style.color = '';
+                }
+                likeCount.textContent = data.likeCount;
+            })
+            .catch(error => console.error('Error:', error));
+    });
+</script>
