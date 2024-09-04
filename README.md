@@ -23,12 +23,16 @@ Cloudinary Account: Sign up for a Cloudinary account and obtain your Cloudinary 
 npm install
 ```
 
-### Setup environment variables for External API
+### Setup environment variables for external API
 Cloudinary: 
 ```
 CLOUDINARY_CLOUD_NAME=yourcredentials
 CLOUDINARY_KEY=yourcredentials
 CLOUDINARY_SECRET=yourcredentials
+```
+### Run the app
+```
+node app.js
 ```
 
 ## Tech Stack Used
